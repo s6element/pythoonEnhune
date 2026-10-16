@@ -1,0 +1,28 @@
+name: build
+on:
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "С питоном (иначе диагностический .mtp)"
+        type: boolean
+        default: false
+      toolchain:
+        description: "Репо с тулчейном MargyT"
+        default: narezany/MargyT
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: mkdir src && unzip -q pyengine.zip -d src && bash src/scripts/ci.sh
+        env:
+          FULL: ${{ inputs.full }}
+          TOOLCHAIN: ${{ inputs.toolchain }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pyengine-mtp
+          path: src/out/margyt.pyengine.mtp
