@@ -11,18 +11,34 @@ on:
         default: narezany/MargyT
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
-      - run: mkdir src && unzip -q pyengine.zip -d src && bash src/scripts/ci.sh
+      - name: Сборка
         env:
           FULL: ${{ inputs.full }}
           TOOLCHAIN: ${{ inputs.toolchain }}
-      - uses: actions/upload-artifact@v4
+        run: |
+          echo "Файлы в корне репо:"; ls -la
+          Z=$(ls -1 *.zip 2>/dev/null | head -1 || true)
+          if [ -n "$Z" ]; then
+            echo "беру архив: $Z"
+            mkdir src && unzip -q "$Z" -d src
+            bash src/scripts/ci.sh
+          elif [ -f scripts/ci.sh ]; then
+            echo "zip не найден, но проект лежит в корне, собираю из него"
+            bash scripts/ci.sh
+          else
+            echo "::error::в корне репо нет ни .zip, ни папки scripts/. Загрузи pyengine.zip в корень репозитория"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v5
         with:
           name: pyengine-mtp
-          path: src/out/margyt.pyengine.mtp
+          path: |
+            src/out/margyt.pyengine.mtp
+            out/margyt.pyengine.mtp
